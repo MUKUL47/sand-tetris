@@ -2,7 +2,7 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 const height = 400;
 const width = 400;
-const D = 4;
+const D = 2;
 const length = Math.floor(width / D);
 //
 const SAND = Array.from({ length }, () => Array.from({ length }).fill(0));
@@ -27,48 +27,17 @@ function filterCoordsFromSand(coords) {
 setupMouseClickAndMove(canvas, (e) => {
   const x = Math.floor(e.clientX / D);
   const y = Math.floor(e.clientY / D);
-  O_BLOCK({ coordinate: { x, y } }).forEach((c) => {
+  const cb = Object.keys(TETRS_BLOCK);
+  const b = cb[Math.floor(Math.random() * cb.length)];
+  const block = generateBlockCoordinates(b, {
+    coordinate: { x, y },
+    depth: 5,
+  });
+  block.forEach((c) => {
     if (SAND[c.x]?.[c.y] != undefined) {
-      SAND[c.x][c.y] = 1;
+      SAND[c.x][c.y] = tetrisBlockIndex[b];
     }
   });
-  return;
-  filterCoordsFromSand([
-    { x, y },
-    {
-      x: x + 1,
-      y,
-    },
-    {
-      x: x - 1,
-      y,
-    },
-    ,
-    {
-      x: x + 2,
-      y,
-    },
-    {
-      x: x + 2,
-      y: y + 1,
-    },
-    {
-      x: x + 2,
-      y: y + 2,
-    },
-    {
-      x: x + 2,
-      y: y + 3,
-    },
-    {
-      x: x,
-      y: y - 32,
-    },
-    {
-      x: x + 11,
-      y,
-    },
-  ]).forEach((c) => this.fillAreaWithSand(c.x, c.y));
 });
 
 function fillAreaWithSand(x, y) {
@@ -80,8 +49,8 @@ function fillAreaWithSand(x, y) {
 function renderSand() {
   SAND.forEach((s, i) => {
     s.forEach((_, j) => {
-      if (SAND[i][j] === 1) {
-        ctx.fillStyle = "#FFF";
+      if (SAND[i][j] > 0) {
+        ctx.fillStyle = tetrisBlockColor[tetrisBlockColorIndex[SAND[i][j]]];
         ctx.fillRect(D * i, D * j, D, D);
       }
     });
@@ -117,10 +86,7 @@ function animateSand() {
     for (let y_axis = length - 1; y_axis >= 0; y_axis--) {
       const isLeft = SAND[x_axis - 1]?.[y_axis + 1] === 0;
       const isRight = SAND[x_axis + 1]?.[y_axis + 1] === 0;
-      if (
-        SAND[x_axis]?.[y_axis + 1] != undefined &&
-        SAND[x_axis][y_axis] == 1
-      ) {
+      if (SAND[x_axis]?.[y_axis + 1] != undefined && SAND[x_axis][y_axis] > 0) {
         if (SAND[x_axis][y_axis + 1] == 0) {
           updateBottom(x_axis, y_axis);
         } else if (isLeft && isRight) {
@@ -139,17 +105,17 @@ function animateSand() {
 }
 
 function updateBottom(x_axis, y_axis) {
+  SAND[x_axis][y_axis + 1] = SAND[x_axis][y_axis];
   SAND[x_axis][y_axis] = 0;
-  SAND[x_axis][y_axis + 1] = 1;
 }
 
 function updateBottomLeft(x_axis, y_axis) {
+  SAND[x_axis - 1][y_axis + 1] = SAND[x_axis][y_axis];
   SAND[x_axis][y_axis] = 0;
-  SAND[x_axis - 1][y_axis + 1] = 1;
 }
 function updateBottomRight(x_axis, y_axis) {
+  SAND[x_axis + 1][y_axis + 1] = SAND[x_axis][y_axis];
   SAND[x_axis][y_axis] = 0;
-  SAND[x_axis + 1][y_axis + 1] = 1;
 }
 
 function loop() {

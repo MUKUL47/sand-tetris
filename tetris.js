@@ -1,85 +1,128 @@
-const J_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
+function getNeighbours({ x, y }, depth = 1) {
+  const neighbours = [];
+  const neighboursSet = new Set();
+  const boundsLoop = (nextCoordinate) => {
+    const hash = `${nextCoordinate.x},${nextCoordinate.y}`;
+    if (
+      Math.abs(nextCoordinate.x - x) > depth ||
+      Math.abs(nextCoordinate.y - y) > depth ||
+      neighboursSet.has(hash)
+    )
+      return;
+    neighbours.push(nextCoordinate);
+    neighboursSet.add(hash);
+    return getStaticNeigbours({
+      x: nextCoordinate.x,
+      y: nextCoordinate.y,
+    }).forEach(boundsLoop);
+  };
+  boundsLoop({ x, y });
+  return neighbours;
+}
+function getStaticNeigbours({ x, y }) {
   return [
-    { x, y },
-    { x: x, y: y + 3 },
-    { x: x + 3, y: y + 3 },
-    { x: x + 6, y: y + 3 },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-
-const I_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
-  return [
-    { x, y },
-    { x: x + 3, y },
-    { x: x + 6, y },
-    { x: x + 9, y },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-const T_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
-  return [
-    { x: x + 3, y },
-    { x, y: y + 3 },
-    { x: x + 3, y: y + 3 },
-    { x: x + 6, y: y + 3 },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-
-const O_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
-  return [
-    { x, y },
-    { x: x + 3, y },
-    { x, y: y + 3 },
-    { x: x + 3, y: y + 3 },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-
-const S_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
-  return [
-    { x: x + 3, y },
-    { x: x + 6, y },
-    { x: x, y: y + 3 },
-    { x: x + 3, y: y + 3 },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-
-const Z_BLOCK = ({ coordinate, distance } = { distance: 1 }) => {
-  const { x, y } = coordinate;
-  return [
-    { x, y },
-    { x: x + 3, y },
-    { x: x + 3, y: y + 3 },
-    { x: x + 6, y: y + 3 },
-  ]
-    .map(getNeighbours)
-    .flat();
-};
-
-function getNeighbours({ x, y }) {
-  return [
-    { x: x, y: y },
     { x: x + 1, y: y },
     { x: x - 1, y: y },
     { x: x, y: y + 1 },
     { x: x, y: y - 1 },
-    { x: x + 1, y: y - 1 },
-    { x: x + 1, y: y + 1 },
-    { x: x - 1, y: y + 1 },
-    { x: x - 1, y: y + 1 },
-    { x: x - 1, y: y - 1 },
   ];
 }
+const BLOCK_COORDINATES = {
+  J: ({ x, y }, depth) => [
+    { x, y },
+    { x: x, y: y + depth * 1 * 2 - 1 },
+    { x: x + depth * 1 * 2 - 1, y: y + depth * 1 * 2 - 1 },
+    { x: x + depth * 2 * 2 - 2, y: y + depth * 1 * 2 - 1 },
+  ],
+
+  I: ({ x, y }, depth) => [
+    { x, y },
+    { x: x + depth * 1 * 2 - 1, y },
+    { x: x + depth * 2 * 2 - 2, y },
+    { x: x + depth * 3 * 2 - 3, y },
+  ],
+
+  O: ({ x, y }, depth) => [
+    { x, y },
+    { x, y: y + depth * 1 * 2 - 1 },
+    { x: x + depth * 1 * 2 - 1, y },
+    { x: x + depth * 1 * 2 - 1, y: y + depth * 1 * 2 - 1 },
+  ],
+
+  S: ({ x, y }, depth) => [
+    { x, y },
+    { x: x + depth * 1 * 2 - 1, y },
+    { x: x + depth * 1 * 2 - 1, y: y + depth * 1 * 2 - 1 },
+    { x: x + depth * 2 * 2 - 2, y: y + depth * 1 * 2 - 1 },
+  ],
+
+  Z: ({ x, y }, depth) => [
+    { x, y },
+    { x: x + depth * 1 * 2 - 1, y },
+    { x: x + depth * 1 * 2 - 1, y: y - depth * 1 * 2 + 1 },
+    { x: x + depth * 2 * 2 - 2, y: y - depth * 1 * 2 + 1 },
+  ],
+
+  T: ({ x, y }, depth) => [
+    { x, y },
+    { x: x - depth * 1 * 2 + 1, y: y + depth * 1 * 2 - 1 },
+    { x: x, y: y + depth * 1 * 2 - 1 },
+    { x: x + depth * 1 * 2 - 1, y: y + depth * 1 * 2 - 1 },
+  ],
+};
+
+const generateBlockCoordinates = (blockType, options) => {
+  if (BLOCK_COORDINATES[blockType])
+    return BLOCK_COORDINATES[blockType](options.coordinate, options.depth)
+      .map((c) => getNeighbours(c, options.depth - 1))
+      .flat();
+};
+//https://github.com/MUKUL47/Tetris/blob/66cccc6ab951fa85457a4d2851c7df3824037c08/block.js#L56
+function rotateBlock(coordinates, center) {
+  for (let i = 0; i < coordinates.length; i++) {
+    let x1 = coordinates[i].x - center.x;
+    let y1 = coordinates[i].y - center.y;
+    let x11 = -y1;
+    let y11 = x1;
+    x1 = x11 + center.x;
+    y1 = y11 + center.y;
+    coordinates[i].x = x1;
+    coordinates[i].y = y1;
+  }
+}
+const tetrisBlockColor = {
+  J: "#FFD700", // Yellow
+  I: "#00BFFF", // Deep Sky Blue
+  O: "#FF6347", // Tomato
+  S: "#7CFC00", // Lawn Green
+  Z: "#FF4500", // Orange Red
+  T: "#9370DB", // Medium Purple
+  // Add more block colors as needed
+};
+
+const tetrisBlockColorIndex = {
+  1: "J",
+  2: "I",
+  3: "O",
+  4: "S",
+  5: "Z",
+  6: "T",
+};
+
+const tetrisBlockIndex = {
+  J: 1,
+  I: 2,
+  O: 3,
+  S: 4,
+  Z: 5,
+  T: 6,
+};
+
+const TETRS_BLOCK = {
+  J: "J",
+  I: "I",
+  O: "O",
+  S: "S",
+  Z: "Z",
+  T: "T",
+};
