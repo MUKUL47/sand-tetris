@@ -1,4 +1,4 @@
-# Sand Tetris
+# Sand Tetris [https://mukul47.github.io/sand-tetris/]
 
 ## Overview
 
