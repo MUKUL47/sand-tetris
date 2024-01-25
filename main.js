@@ -82,6 +82,7 @@ function setupMouseClickAndMove(canvas, callback) {
 }
 
 function simulateSand() {
+  let allParticlesSettled = true;
   for (let x = length - 1; x >= 0; x--) {
     for (let y = length - 1; y >= 0; y--) {
       const currentParticle = SAND[x][y];
@@ -92,9 +93,11 @@ function simulateSand() {
       if (!isOutOfBounds && currentParticle.value > 0) {
         if (belowParticle.value === 0) {
           updateNewCoordinate(x, y, "BOTTOM");
+          allParticlesSettled = false;
         } else {
           const canMoveLeft = leftBelowParticle?.value === 0;
           const canMoveRight = rightBelowParticle?.value === 0;
+          allParticlesSettled = !(canMoveLeft || canMoveRight);
           if (canMoveLeft && canMoveRight) {
             Math.floor(Math.random() * 2) % 2 === 0
               ? updateNewCoordinate(x, y, "LEFT")
@@ -108,14 +111,18 @@ function simulateSand() {
       }
     }
   }
+  // updateActiveParticle();
+  spawnAvailable = allParticlesSettled;
   updateActiveParticle();
 }
 
 function updateActiveParticle() {
+  if (!spawnAvailable) return;
   for (const particle of activeParticles) {
     if (particle.y === length - 1) {
       particle.isDone = true;
       completedBlocks.add(particle.id);
+      spawnAvailable = true;
       spawn();
       return;
     }
@@ -125,6 +132,7 @@ function updateActiveParticle() {
       if (neighbour?.id != particle.id && completedBlocks.has(neighbour?.id)) {
         particle.isDone = true;
         completedBlocks.add(particle.id);
+        spawnAvailable = true;
         spawn();
         return;
       }
@@ -181,12 +189,11 @@ loop();
 setup();
 
 function spawn() {
-  const start = Math.floor(length / 4);
-  const randX = Math.floor(Math.random() * (length - start - start + 1)) + 50;
+  const randX = Math.floor(length / 2) - D * 5;
   const cb = Object.keys(TETRS_BLOCK);
   const b = cb[Math.floor(Math.random() * cb.length)];
   const blocks = generateBlockCoordinates(b, {
-    coordinate: { x: randX, y: 20 },
+    coordinate: { x: randX, y: 15 },
     depth: 5,
   });
   let id = Date.now();
