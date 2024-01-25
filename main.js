@@ -6,7 +6,8 @@ const D = 2;
 const length = Math.floor(width / D);
 let key = null;
 let keyDown = null;
-let downSpeed = 1.5;
+let simulationSpeed = 4;
+let simulationPaused = false;
 let spawnAvailable = true;
 let completedBlocks = new Set();
 let activeParticles = [];
@@ -79,7 +80,7 @@ function setupMouseClickAndMove(canvas, callback) {
   // });
 }
 
-function animateSand() {
+function simulateSand() {
   for (let x = length - 1; x >= 0; x--) {
     for (let y = length - 1; y >= 0; y--) {
       const currentParticle = SAND[x][y];
@@ -157,15 +158,18 @@ function loop() {
       moveBlockParticles(keyDown);
     }
     if (keyDown === "DOWN") {
-      downSpeed = 3;
+      simulationSpeed = 3;
     }
     clean();
     render();
     renderSand();
-    for (let i = 0; i < downSpeed; i++) animateSand();
+    for (let i = 0; i < simulationSpeed && !simulationPaused; i++) {
+      simulateSand();
+    }
+    removeSameColorFill();
     key = null;
     keyDown = null;
-    downSpeed = 0.2;
+    simulationSpeed = 1;
     loop();
   });
 }
@@ -191,6 +195,7 @@ function spawn() {
         block: b,
         x: c.x,
         y: c.y,
+        color: tetrisBlockColor[b],
       };
       activeParticles.push(SAND[c.x][c.y]);
     }
@@ -239,6 +244,62 @@ function moveBlockParticles(direction) {
       const hash = `${i},${j}`;
       if (particlesMap.has(hash)) {
         SAND[i][j] = particlesMap.get(hash);
+      }
+    }
+  }
+}
+function removeSameColorFill() {
+  const visitedParticles = [];
+  const initialParticle = [];
+  const fillSucceeded = [];
+  const floodFill = (particle, index) => {
+    const { x, y } = particle;
+    const hash = `${x},${y}`;
+    visitedParticles[index].add(hash);
+    if (
+      !fillSucceeded[index] &&
+      !(initialParticle[index].x === x && initialParticle[index].y === y)
+    ) {
+      fillSucceeded[index] =
+        initialParticle[index].x === 0 ? x === length - 1 : x === 0;
+    }
+    getStaticNeigbours({ x, y })
+      .filter((p) => {
+        const v = SAND[p.x]?.[p.y];
+        if (v?.color !== initialParticle[index].color) return false;
+        return !(
+          !v ||
+          v?.x < 0 ||
+          v?.x >= length ||
+          v?.y < 0 ||
+          v?.y >= length ||
+          v?.value === 0 ||
+          visitedParticles[index].has(`${v.x},${v.y}`)
+        );
+      })
+      .forEach((v) => floodFill(v, index));
+  };
+  const uniqueParticlesAtBorder = SAND[0].reduce((a, c) => {
+    if (c.id && completedBlocks.has(c.id) && !a.has(c.color)) {
+      a.set(c.color, c);
+    }
+    return a;
+  }, new Map());
+  if (uniqueParticlesAtBorder.size > 0) {
+    let i = 0;
+    for (let [_, v] of uniqueParticlesAtBorder) {
+      initialParticle.push(v);
+      visitedParticles.push(new Set());
+      fillSucceeded[i] = false;
+      floodFill(v, i++);
+    }
+  }
+  for (let i = 0; i < fillSucceeded.length; i++) {
+    if (fillSucceeded[i]) {
+      simulationPaused = true;
+      for (let p of visitedParticles[i]) {
+        const [x, y] = p.split(",").map(Number);
+        SAND[x][y].value = 0;
       }
     }
   }
