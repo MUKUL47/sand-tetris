@@ -112,8 +112,8 @@ const tetrisBlockColor = {
   J: "green", // Yellow
   I: "red", // Deep Sky Blue
   O: "pink", // Tomato
-  S: "white", // Lawn Green
-  Z: "white", // Orange Red
+  S: "blue", // Lawn Green
+  Z: "cyan", // Orange Red
   T: "white", // Medium Purple
   // Add more block colors as needed
 };

@@ -13,7 +13,9 @@ let simulationPaused = false;
 let simulateRemoveParticle = [];
 let spawnAvailable = true;
 let completedBlocks = new Set();
+let activeBlocks = new Set();
 let activeParticles = [];
+let gameOver = false;
 const coordinateMapX = {
   LEFT: -1,
   RIGHT: 1,
@@ -85,15 +87,20 @@ function updateActiveParticle() {
   for (const particle of activeParticles) {
     if (particle.y === length_height - 1) {
       particle.isDone = true;
+      activeBlocks.delete(particle.id);
       completedBlocks.add(particle.id);
       spawn();
       return;
     }
 
-    for (const n of getStaticNeigbours(particle)) {
+    for (const n of getStaticNeigbours({
+      ...particle,
+      includeDiagonals: true,
+    })) {
       const neighbour = SAND[n.x]?.[n.y];
       if (neighbour?.id != particle.id && completedBlocks.has(neighbour?.id)) {
         particle.isDone = true;
+        activeBlocks.delete(particle.id);
         completedBlocks.add(particle.id);
         spawn();
         return;
@@ -114,32 +121,6 @@ function updateNewCoordinate(x, y, coordinate) {
   SAND[newCoordinateX][newCoordinateY].y = newCoordinateY;
   SAND[x][y] = { value: 0 };
 }
-function loop() {
-  requestAnimationFrame(() => {
-    if (key === "UP") {
-      rotateBlockParticles();
-    }
-    if (keyDown === "RIGHT" || keyDown === "LEFT") {
-      moveBlockParticles(keyDown);
-    }
-    if (keyDown === "DOWN") {
-      simulationSpeed = 3;
-    }
-    clean();
-    renderSand();
-    for (let i = 0; i < simulationSpeed && !simulationPaused; i++) {
-      simulateSandParticle();
-    }
-    const removeParticleUntil = simulateRemoveParticle.length > 0 ? 20 : 1;
-    for (let i = 0; i < removeParticleUntil; i++) {
-      removeSameColorFill();
-    }
-    key = null;
-    keyDown = null;
-    simulationSpeed = 1;
-    loop();
-  });
-}
 loop();
 setup();
 
@@ -148,9 +129,10 @@ function spawn() {
   const cb = Object.keys(TETRS_BLOCK);
   const b = cb[Math.floor(Math.random() * cb.length)];
   const blocks = generateBlockCoordinates(b, {
-    coordinate: { x: randX, y: 20 },
+    coordinate: { x: randX, y: 15 },
     depth,
   });
+  checkGameOver(blocks);
   let id = Date.now();
   activeParticles = [];
   blocks.forEach((c) => {
@@ -165,6 +147,7 @@ function spawn() {
       };
       activeParticles.push(SAND[c.x][c.y]);
     }
+    activeBlocks.add(id);
   });
 }
 function rotateBlockParticles() {
@@ -289,6 +272,21 @@ function removeSameColorFill() {
   }
 }
 
+function checkGameOver(upcomingBlockCoordinates) {
+  const coordsMap = upcomingBlockCoordinates.reduce((a, c) => {
+    a.set(`${c.x},${c.y}`, true);
+    return a;
+  }, new Map());
+  for (let i = 0; i < length_width; i++) {
+    for (let j = 0; j < length_height; j++) {
+      if (SAND[i][j].value > 0 && coordsMap.has(`${i},${j}`)) {
+        gameOver = true;
+        break;
+      }
+    }
+  }
+}
+
 function onKey() {
   ["keydown", "keyup"].map((e) =>
     document.addEventListener(e, function (event) {
@@ -302,4 +300,35 @@ function onKey() {
       }
     })
   );
+}
+function handleControls() {
+  if (key === "UP") {
+    rotateBlockParticles();
+  }
+  if (keyDown === "RIGHT" || keyDown === "LEFT") {
+    moveBlockParticles(keyDown);
+  }
+  if (keyDown === "DOWN") {
+    simulationSpeed = 3;
+  }
+}
+function loop() {
+  requestAnimationFrame(() => {
+    if (!gameOver) {
+      handleControls();
+      for (let i = 0; i < simulationSpeed && !simulationPaused; i++) {
+        simulateSandParticle();
+      }
+      const removeParticleUntil = simulateRemoveParticle.length > 0 ? 20 : 1;
+      for (let i = 0; i < removeParticleUntil; i++) {
+        removeSameColorFill();
+      }
+      key = null;
+      keyDown = null;
+      simulationSpeed = 1;
+    }
+    clean();
+    renderSand();
+    loop();
+  });
 }
