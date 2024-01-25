@@ -19,14 +19,26 @@ function getNeighbours({ x, y }, depth = 1) {
   boundsLoop({ x, y });
   return neighbours;
 }
-function getStaticNeigbours({ x, y }) {
-  return [
+function getStaticNeigbours({ x, y, includeDiagonals = false }) {
+  const neighbors = [
     { x: x + 1, y: y },
     { x: x - 1, y: y },
     { x: x, y: y + 1 },
     { x: x, y: y - 1 },
   ];
+
+  if (includeDiagonals) {
+    neighbors.push(
+      { x: x + 1, y: y + 1 },
+      { x: x - 1, y: y - 1 },
+      { x: x + 1, y: y - 1 },
+      { x: x - 1, y: y + 1 }
+    );
+  }
+
+  return neighbors;
 }
+
 const BLOCK_COORDINATES = {
   J: ({ x, y }, depth) => [
     { x, y },
@@ -97,12 +109,12 @@ function rotateBlock(coordinates, center) {
   return [coordinates, coordsMap];
 }
 const tetrisBlockColor = {
-  J: "#FFD700", // Yellow
+  J: "green", // Yellow
   I: "red", // Deep Sky Blue
-  O: "#FFD700", // Tomato
-  S: "#7CFC00", // Lawn Green
-  Z: "red", // Orange Red
-  T: "#7CFC00", // Medium Purple
+  O: "pink", // Tomato
+  S: "white", // Lawn Green
+  Z: "white", // Orange Red
+  T: "white", // Medium Purple
   // Add more block colors as needed
 };
 
