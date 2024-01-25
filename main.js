@@ -8,6 +8,7 @@ let key = null;
 let keyDown = null;
 let simulationSpeed = 4;
 let simulationPaused = false;
+let simulateRemoveParticle = [];
 let spawnAvailable = true;
 let completedBlocks = new Set();
 let activeParticles = [];
@@ -166,7 +167,10 @@ function loop() {
     for (let i = 0; i < simulationSpeed && !simulationPaused; i++) {
       simulateSand();
     }
-    removeSameColorFill();
+    const removeParticleUntil = simulateRemoveParticle.length > 0 ? 20 : 1;
+    for (let i = 0; i < removeParticleUntil; i++) {
+      removeSameColorFill();
+    }
     key = null;
     keyDown = null;
     simulationSpeed = 1;
@@ -249,6 +253,16 @@ function moveBlockParticles(direction) {
   }
 }
 function removeSameColorFill() {
+  if (simulationPaused) {
+    if (simulateRemoveParticle.length > 0) {
+      const sand = simulateRemoveParticle.pop();
+      sand.value = 0;
+      return;
+    } else {
+      simulationPaused = false;
+    }
+    return;
+  }
   const visitedParticles = [];
   const initialParticle = [];
   const fillSucceeded = [];
@@ -299,7 +313,7 @@ function removeSameColorFill() {
       simulationPaused = true;
       for (let p of visitedParticles[i]) {
         const [x, y] = p.split(",").map(Number);
-        SAND[x][y].value = 0;
+        simulateRemoveParticle.push(SAND[x][y]);
       }
     }
   }
