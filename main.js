@@ -12,20 +12,19 @@ let simulateRemoveParticle = [];
 let spawnAvailable = true;
 let completedBlocks = new Set();
 let activeParticles = [];
-//
+const coordinateMapX = {
+  LEFT: -1,
+  RIGHT: 1,
+  BOTTOM: 0,
+};
 const SAND = Array.from({ length }, () =>
   Array.from({ length }, () => ({ value: 0 }))
 );
 //
 
-function render() {
-  // for (let i = 0; i < length; i++) {
-  //   for (let j = 0; j < length; j++) {
-  //     ctx.fillStyle = "lightblue";
-  //     ctx.strokeStyle = "blue";
-  //     ctx.strokeRect(i * D, j * D, D, D);
-  //   }
-  // }
+function setup() {
+  spawn();
+  onKey();
 }
 function clean() {
   ctx.clearRect(0, 0, height, width);
@@ -33,16 +32,6 @@ function clean() {
 
 function filterCoordsFromSand(coords) {
   return coords.filter((c) => SAND[c.x]?.[c.y] != undefined);
-}
-setupMouseClickAndMove(canvas, (e) => {
-  const x = Math.floor(e.clientX / D);
-  const y = Math.floor(e.clientY / D);
-});
-
-function fillAreaWithSand(x, y) {
-  ctx.fillStyle = "#FFF";
-  SAND[x][y] = 1;
-  renderSand();
 }
 
 function renderSand() {
@@ -56,32 +45,7 @@ function renderSand() {
     });
   });
 }
-
-function setupMouseClickAndMove(canvas, callback) {
-  // var isMouseDown = false;
-  // canvas.addEventListener("mousedown", function (event) {
-  //   callback(event);
-  //   isMouseDown = true;
-  // });
-  // canvas.addEventListener("mouseup", function (event) {
-  //   callback(event);
-  //   isMouseDown = false;
-  // });
-  // canvas.addEventListener("click", function (event) {
-  canvas.addEventListener("click", function (event) {
-    // if (isMouseDown) {
-    // callback(event);
-    // }
-  });
-  // // canvas.addEventListener("click", function (event) {
-  // canvas.addEventListener("click", function (event) {
-  //   // if (isMouseDown) {
-  //   callback(event);
-  //   // }
-  // });
-}
-
-function simulateSand() {
+function simulateSandParticle() {
   let allParticlesSettled = true;
   for (let x = length - 1; x >= 0; x--) {
     for (let y = length - 1; y >= 0; y--) {
@@ -143,12 +107,6 @@ function updateActiveParticle() {
     }
   }
 }
-
-const coordinateMapX = {
-  LEFT: -1,
-  RIGHT: 1,
-  BOTTOM: 0,
-};
 function updateNewCoordinate(x, y, coordinate) {
   const newCoordinateX = x + coordinateMapX[coordinate];
   const newCoordinateY = y + 1;
@@ -170,10 +128,9 @@ function loop() {
       simulationSpeed = 3;
     }
     clean();
-    render();
     renderSand();
     for (let i = 0; i < simulationSpeed && !simulationPaused; i++) {
-      simulateSand();
+      simulateSandParticle();
     }
     const removeParticleUntil = simulateRemoveParticle.length > 0 ? 20 : 1;
     for (let i = 0; i < removeParticleUntil; i++) {
@@ -338,8 +295,4 @@ function onKey() {
       }
     })
   );
-}
-function setup() {
-  spawn();
-  onKey();
 }
