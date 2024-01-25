@@ -109,15 +109,13 @@ function rotateBlock(coordinates, center) {
   return [coordinates, coordsMap];
 }
 const tetrisBlockColor = {
-  J: "green", // Yellow
-  I: "red", // Deep Sky Blue
-  O: "pink", // Tomato
-  S: "blue", // Lawn Green
-  Z: "cyan", // Orange Red
-  T: "white", // Medium Purple
-  // Add more block colors as needed
+  J: "#FFD700",
+  I: "#00BFFF",
+  O: "#FFA07A",
+  S: "#32CD32",
+  Z: "#FF4500",
+  T: "#800080",
 };
-
 const tetrisBlockColorIndex = {
   1: "J",
   2: "I",

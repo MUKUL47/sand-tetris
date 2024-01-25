@@ -24,11 +24,9 @@ const coordinateMapX = {
 const SAND = Array.from({ length: length_width }, () =>
   Array.from({ length: length_height }, () => ({ value: 0 }))
 );
+const scoreBoardDom = window["score-board"];
+let score = 0;
 //
-function setup() {
-  spawn();
-  onKey();
-}
 function clean() {
   ctx.clearRect(0, 0, height, height);
 }
@@ -121,8 +119,6 @@ function updateNewCoordinate(x, y, coordinate) {
   SAND[newCoordinateX][newCoordinateY].y = newCoordinateY;
   SAND[x][y] = { value: 0 };
 }
-loop();
-setup();
 
 function spawn() {
   const randX = Math.floor(length_width / 2);
@@ -203,6 +199,8 @@ function removeSameColorFill() {
     if (simulateRemoveParticle.length > 0) {
       const sand = simulateRemoveParticle.pop();
       sand.value = 0;
+      score++;
+      scoreBoardDom.innerHTML = score;
       return;
     } else {
       simulationPaused = false;
@@ -280,8 +278,8 @@ function checkGameOver(upcomingBlockCoordinates) {
   for (let i = 0; i < length_width; i++) {
     for (let j = 0; j < length_height; j++) {
       if (SAND[i][j].value > 0 && coordsMap.has(`${i},${j}`)) {
-        gameOver = true;
-        break;
+        alert("Game over !!");
+        window.location.reload();
       }
     }
   }
@@ -312,6 +310,7 @@ function handleControls() {
     simulationSpeed = 3;
   }
 }
+function loadNextPeice() {}
 function loop() {
   requestAnimationFrame(() => {
     if (!gameOver) {
@@ -332,3 +331,11 @@ function loop() {
     loop();
   });
 }
+function setup() {
+  spawn();
+  onKey();
+}
+document.addEventListener("DOMContentLoaded", () => {
+  setup();
+  loop();
+});
