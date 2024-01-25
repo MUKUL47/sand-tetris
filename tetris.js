@@ -79,6 +79,10 @@ const generateBlockCoordinates = (blockType, options) => {
 };
 //https://github.com/MUKUL47/Tetris/blob/66cccc6ab951fa85457a4d2851c7df3824037c08/block.js#L56
 function rotateBlock(coordinates, center) {
+  const coordsMap = new Map();
+  if (!center) {
+    center = coordinates[Math.round(coordinates.length / 2)];
+  }
   for (let i = 0; i < coordinates.length; i++) {
     let x1 = coordinates[i].x - center.x;
     let y1 = coordinates[i].y - center.y;
@@ -88,7 +92,9 @@ function rotateBlock(coordinates, center) {
     y1 = y11 + center.y;
     coordinates[i].x = x1;
     coordinates[i].y = y1;
+    coordsMap.set(`${coordinates[i].x},${coordinates[i].y}`, coordinates[i]);
   }
+  return [coordinates, coordsMap];
 }
 const tetrisBlockColor = {
   J: "#FFD700", // Yellow
